@@ -58,11 +58,13 @@ tr.r0 td.n{font-weight:600}
 .modo+.buscar{margin-top:12px}
 .estado{font-size:12.5px;color:var(--muted);margin:2px 0 10px;min-height:16px}
 .grp{border-top:1px solid var(--line);padding:14px 2px 10px}.grp:first-child{border-top:0}
+.grp .fn .ico{vertical-align:-3px}
 .grp .fn{font:600 15px/1.3 'Outfit';overflow-wrap:anywhere}.grp .fn mark{background:rgba(255,255,255,.22);color:#fff;border-radius:3px;padding:0 1px}
 .grp .cu{font-size:12px;color:var(--muted);margin:2px 0 6px}.grp .cu b{color:var(--acc);font-weight:600}
 .grp a{display:grid;grid-template-columns:62px 1fr auto;gap:2px 10px;align-items:baseline;text-decoration:none;background:var(--panel);border-radius:8px;padding:9px 11px;margin-top:6px}
 .grp a .i{font:700 15px 'Outfit'}.grp a .dn{font:600 13px 'Outfit';text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .grp a .sz{font-size:12px;color:var(--ink2);white-space:nowrap}
+.grp a .co{grid-column:2/4;font-size:12px;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:-1px}
 .grp a .ru{grid-column:2/4;font-size:12px;color:var(--muted);overflow-wrap:anywhere;line-height:1.35}
 .mas{font-size:13px;color:var(--muted);text-align:center;margin:14px 0 0}
 .aviso{background:var(--panel);border-radius:10px;padding:11px 13px;margin-top:22px;font-size:13.5px;line-height:1.45;color:var(--ink2)}.aviso b{color:#fff;overflow-wrap:anywhere}
@@ -85,7 +87,7 @@ function mes(t){var d=new Date(t);return MES[d.getMonth()]+' '+d.getFullYear()}
 function idDe(q){var m=String(q||'').match(/(\d+)/);return m?'HD-'+('00'+parseInt(m[1],10)).slice(-3):''}
 function pdf(id){return FICHAS+'/'+id+'_ficha.pdf'}
 async function json(u){var r=await fetch(u,{cache:'no-store'});if(!r.ok)throw new Error(r.status);return r.json()}
-var ABIERTO={0:true},RUTA={};
+var ABIERTO={0:true},RUTA={},ESC=new URLSearchParams(location.search).get('k')==='1';
 function arbol(o){
   var a=o.arbol||[],h='<tr class="r0 ab" data-i="0" data-l="0"><td class="n"><button class="tg">'+ICO_A+'<span>'+esc(o.root||o.nombre||o.id)+'</span></button></td><td class="q">'+(o.n?o.n.toLocaleString('es-CL')+' arch.':'')+'</td><td class="s">'+(o.tot?fmt(o.tot):'')+'</td></tr>';
   if(o.raiz>0)h+='<tr data-l="1"><td class="n" style="padding-left:18px"><span class="tg"><span>Archivos sueltos en la raíz</span></span></td><td class="q"></td><td class="s">'+fmt(o.raiz)+'</td></tr>';
@@ -104,7 +106,7 @@ function disco(o,c,an){
     (o.contenido?'<p class="cont">'+esc(o.contenido)+'</p>':'')+
     '<div class="datos">'+(o.n?'<span><b>'+o.n.toLocaleString('es-CL')+'</b> archivos</span>':'')+(o.min?'<span>Fechas: <b>'+mes(o.min)+' – '+mes(o.max)+'</b></span>':'')+'</div>'+
     (o.estado?'<span class="est">'+esc(o.estado)+'</span>':'')+
-    (an?'<div class="aviso">Buscaste <b>'+esc(an)+'</b>. Está en <b>'+esc(o.root||o.id)+(c?' / '+esc(c.split('/').join(' / ')):' (raíz)')+'</b></div>':'')+
+    (an?(ESC?'<div class="aviso">Carpeta <b>'+esc(an)+'</b>: <b>'+esc(o.root||o.id)+' / '+esc(c.split('/').join(' / '))+'</b></div>':'<div class="aviso">Buscaste <b>'+esc(an)+'</b>. Está en <b>'+esc(o.root||o.id)+(c?' / '+esc(c.split('/').join(' / ')):' (raíz)')+'</b></div>'):'')+
     ((o.arbol&&o.arbol.length)||o.raiz?'<h2>Carpetas <span><button id="abT">Abrir todo</button><button id="ceT">Cerrar todo</button></span></h2><div class="caja"><table id="arb">'+arbol(o)+'</table></div>':'')+
     ((o.tipos&&o.tipos.length)?'<h2>Material por tipo</h2><div class="caja"><table class="tip">'+o.tipos.slice(0,10).map(function(x){return '<tr><td class="e">.'+esc(x[0])+'</td><td class="g"><i style="width:'+(x[1]/mx*100).toFixed(1)+'%"></i></td><td class="s">'+fmt(x[1])+'</td></tr>'}).join('')+'</table></div>':'')+
     '<a class="btn" href="'+pdf(o.id)+'">Abrir ficha completa (PDF)</a><p class="nota">La ficha PDF se abre con cuenta UDD.</p>'+
@@ -122,14 +124,16 @@ var ARCH=null,CARGA=null;
 async function cargarArchivos(L,av){ /* v2.19: listas de archivos publicadas por la app */
   if(ARCH)return ARCH;if(CARGA)return CARGA;
   CARGA=(async function(){
-    var con=L.filter(function(o){return o.fa}),hechos=0,out=[],tot=0;
-    if(!con.length)return ARCH={discos:0,n:0,f:[]};
+    var con=L.filter(function(o){return o.fa}),hechos=0,out=[],outC=[],tot=0;
+    if(!con.length)return ARCH={discos:0,n:0,f:[],c:[]};
     var cola=con.slice();
     async function obrero(){while(cola.length){var o=cola.shift();
-      try{var d=await json('d/'+o.id+'_archivos.json');(d.f||[]).forEach(function(x){var nn=norm(x[1]);var e={o:o,c:d.c[x[0]]||'',n:x[1],b:x[2],t:x[3],q:x[4]||0,nn:nn,ns:sinSep(nn)},m=e.q&&/^(.*)\[(\d+)-(\d+)\](\.[^.]+)$/.exec(nn);if(m){e.sp=m[1];e.lo=+m[2];e.hi=+m[3];e.se=m[4]}out.push(e)})}catch(e){}
+      try{var d=await json('d/'+o.id+'_archivos.json');(d.f||[]).forEach(function(x){var nn=norm(x[1]);var e={o:o,c:d.c[x[0]]||'',n:x[1],b:x[2],t:x[3],q:x[4]||0,nn:nn,ns:sinSep(nn)},m=e.q&&/^(.*)\[(\d+)-(\d+)\](\.[^.]+)$/.exec(nn);if(m){e.sp=m[1];e.lo=+m[2];e.hi=+m[3];e.se=m[4]}out.push(e)});
+        var dc={};(d.f||[]).forEach(function(x){var c=d.c[x[0]]||'';if(!c)return;var ps=c.split('/');for(var k=1;k<=ps.length;k++){var p=ps.slice(0,k).join('/'),z=dc[p]||(dc[p]={n:0,b:0});z.n+=(x[4]||1);z.b+=x[2]}});
+        Object.keys(dc).forEach(function(p){var nm=p.slice(p.lastIndexOf('/')+1),nn=norm(nm);outC.push({o:o,p:p,n:nm,cnt:dc[p].n,b:dc[p].b,nn:nn,ns:sinSep(nn)})})}catch(e){}
       hechos++;av(hechos,con.length)}}
     var ps=[];for(var k=0;k<Math.min(6,con.length);k++)ps.push(obrero());await Promise.all(ps);
-    return ARCH={discos:con.length,n:out.length,f:out};
+    return ARCH={discos:con.length,n:out.length,f:out,c:outC};
   })();
   return CARGA;
 }
@@ -147,25 +151,35 @@ function lista(L,modo){
     if(modo!=='a')return;
     if(!A.discos){$('es').textContent='';$('l').innerHTML='<p class="msg">Todavía no hay listas de archivos publicadas. Se suben desde Disk Label (v2.19 o posterior) al guardar cada disco o con «Publicar todos los discos del Índice».</p>';return}
     var q=norm($('q').value.trim()),toks=q.split(/\s+/).filter(Boolean);
-    var base='Busca entre '+A.n.toLocaleString('es-CL')+' archivos de '+A.discos+(A.discos===1?' disco':' discos')+(A.discos<L.length?' (de '+L.length+' en el inventario)':'')+'.';
+    var base='Busca entre '+A.n.toLocaleString('es-CL')+' archivos y '+A.c.length.toLocaleString('es-CL')+' carpetas de '+A.discos+(A.discos===1?' disco':' discos')+(A.discos<L.length?' (de '+L.length+' en el inventario)':'')+'.';
     if(q.length<2){$('es').textContent=base;$('l').innerHTML='<p class="msg">Escribe parte del nombre de un archivo: <i>ESC_12</i>, <i>A001C003</i>, <i>master</i>, <i>.wav</i>… Un mismo archivo puede aparecer en varios discos.</p>';return}
     var tk2=toks.map(sinSep),tk3=toks.map(function(t){return /^(.*?)(\d{3,})(\.[a-z0-9]{2,5})?$/.exec(t)}),G={},orden=[],nres=0;
     function cuadro(x,m){return x.sp!=null&&m&&x.sp.slice(-m[1].length)===m[1]&&+m[2]>=x.lo&&+m[2]<=x.hi&&(!m[3]||m[3]===x.se)}
     A.f.forEach(function(x){for(var k=0;k<toks.length;k++){if(x.nn.indexOf(toks[k])<0&&(!tk2[k]||x.ns.indexOf(tk2[k])<0)&&!cuadro(x,tk3[k]))return}
       nres++;var g=G[x.nn];if(!g){g=G[x.nn]={n:x.n,r:[]};orden.push(g)}g.r.push(x)});
     orden.sort(function(a,b){var ea=norm(a.n)===q?0:1,eb=norm(b.n)===q?0:1;return ea-eb||a.n.localeCompare(b.n,'es',{numeric:true})});
-    var MAX=150,hh='';
+    var GC={},ordC=[],nresC=0;
+    A.c.forEach(function(x){for(var k=0;k<toks.length;k++){if(x.nn.indexOf(toks[k])<0&&(!tk2[k]||x.ns.indexOf(tk2[k])<0))return}
+      nresC++;var g=GC[x.nn];if(!g){g=GC[x.nn]={n:x.n,r:[]};ordC.push(g)}g.r.push(x)});
+    ordC.sort(function(a,b){var ea=norm(a.n)===q?0:1,eb=norm(b.n)===q?0:1;return ea-eb||a.n.localeCompare(b.n,'es',{numeric:true})});
+    var MAX=150,MAXC=40,hh='',hc='';
+    ordC.slice(0,MAXC).forEach(function(g){
+      g.r.sort(function(a,b){return (a.o.id<b.o.id?-1:a.o.id>b.o.id?1:0)||a.p.localeCompare(b.p)});
+      var ds={};g.r.forEach(function(x){ds[x.o.id]=1});var nd=Object.keys(ds).length;
+      hc+='<div class="grp"><div class="fn">'+ICO_C+' '+marca(g.n,toks)+'</div><div class="cu">'+(nd>1?'<b>En '+nd+' discos</b>':'En 1 disco')+(g.r.length>nd?' · '+g.r.length+' carpetas con este nombre':'')+'</div>'+
+        g.r.map(function(x){var par=x.p.lastIndexOf('/')>=0?x.p.slice(0,x.p.lastIndexOf('/')):'';
+          return '<a href="./?'+x.o.id.replace(/\D/g,'')+'&c='+encodeURIComponent(x.p)+'&a='+encodeURIComponent(x.n)+'&k=1"><span class="i">'+esc(x.o.id)+'</span><span class="dn">'+esc(x.o.nombre||'')+'</span><span class="sz">'+fmt(x.b)+'</span>'+(x.o.contenido?'<span class="co">'+esc(x.o.contenido)+'</span>':'')+'<span class="ru">/'+esc(par)+(par?'/':'')+'<b style="color:#fff">'+esc(x.n)+'</b> · '+x.cnt.toLocaleString('es-CL')+' arch.</span></a>'}).join('')+'</div>'});
     orden.slice(0,MAX).forEach(function(g){
       g.r.sort(function(a,b){return a.o.id<b.o.id?-1:a.o.id>b.o.id?1:0});
       var ds={};g.r.forEach(function(x){ds[x.o.id]=1});var nd=Object.keys(ds).length;
       hh+='<div class="grp"><div class="fn">'+marca(g.n,toks)+'</div><div class="cu">'+(nd>1?'<b>En '+nd+' discos</b>':'En 1 disco')+(g.r.length>nd?' · '+g.r.length+' copias':'')+(g.r[0].q?' · secuencia de '+g.r[0].q.toLocaleString('es-CL')+' archivos':'')+'</div>'+
-        g.r.map(function(x){return '<a href="./?'+x.o.id.replace(/\D/g,'')+'&c='+encodeURIComponent(x.c)+'&a='+encodeURIComponent(x.n)+'"><span class="i">'+esc(x.o.id)+'</span><span class="dn">'+esc(x.o.nombre||'')+'</span><span class="sz">'+fmt(x.b)+'</span><span class="ru">/'+esc(x.c)+(x.t?' · '+mes(x.t*864e5):'')+'</span></a>'}).join('')+'</div>'});
-    $('es').textContent=nres?(nres.toLocaleString('es-CL')+(nres===1?' coincidencia':' coincidencias')+' en '+orden.length.toLocaleString('es-CL')+(orden.length===1?' nombre':' nombres')+'.'):base;
-    $('l').innerHTML=(hh||'<p class="msg">Ningún archivo se llama así.</p>')+(orden.length>MAX?'<p class="mas">Se muestran '+MAX+' de '+orden.length.toLocaleString('es-CL')+' nombres. Escribe más para afinar.</p>':'');
+        g.r.map(function(x){return '<a href="./?'+x.o.id.replace(/\D/g,'')+'&c='+encodeURIComponent(x.c)+'&a='+encodeURIComponent(x.n)+'"><span class="i">'+esc(x.o.id)+'</span><span class="dn">'+esc(x.o.nombre||'')+'</span><span class="sz">'+(x.b>0?fmt(x.b):'&lt; 0,1 MB')+'</span>'+(x.o.contenido?'<span class="co">'+esc(x.o.contenido)+'</span>':'')+'<span class="ru">/'+esc(x.c)+(x.t?' · '+mes(x.t*864e5):'')+'</span></a>'}).join('')+'</div>'});
+    $('es').textContent=(nres||nresC)?((nresC?nresC.toLocaleString('es-CL')+(nresC===1?' carpeta':' carpetas'):'')+(nresC&&nres?' y ':'')+(nres?nres.toLocaleString('es-CL')+(nres===1?' archivo':' archivos'):'')+' con ese nombre.'):base;
+    $('l').innerHTML=(hc?'<h2>Carpetas</h2>'+hc:'')+(hh?(hc?'<h2>Archivos</h2>':'')+hh:'')+(!hh&&!hc?'<p class="msg">Ningún archivo ni carpeta se llama así.</p>':'')+(orden.length>MAX?'<p class="mas">Se muestran '+MAX+' de '+orden.length.toLocaleString('es-CL')+' nombres. Escribe más para afinar.</p>':'');
   }
   function pinta(){if(modo==='a'){clearTimeout(tm);tm=setTimeout(pintaArchivos,180)}else pintaDiscos()}
   function setModo(m,foco){modo=m;$('mD').classList.toggle('on',m!=='a');$('mA').classList.toggle('on',m==='a');
-    $('q').placeholder=m==='a'?'Buscar un archivo por su nombre':'Buscar por número, nombre o contenido';
+    $('q').placeholder=m==='a'?'Buscar un archivo o carpeta por su nombre':'Buscar por número, nombre o contenido';
     try{history.replaceState(null,'',m==='a'?'./?archivos':'./')}catch(e){}pinta();if(foco)$('q').focus()}
   $('mD').onclick=function(){if(modo==='a')setModo('d',1)};$('mA').onclick=function(){if(modo!=='a')setModo('a',1)};
   $('q').addEventListener('input',pinta);setModo(modo||'d');
