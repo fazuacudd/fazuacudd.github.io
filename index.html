@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Disk Label · Cine UDD</title>
+<style>
+:root{--bg:#204c8e;--fg:#fff;--muted:#b3c7e6}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}
+main{min-height:100%;display:flex;flex-direction:column;justify-content:center;padding:32px 24px;box-sizing:border-box;max-width:520px;margin:0 auto}
+h1{font-size:44px;line-height:1;margin:0 0 6px;letter-spacing:-.02em}
+p{color:var(--muted);font-size:16px;line-height:1.45;margin:8px 0}
+a.b{display:inline-block;margin-top:18px;background:#fff;color:#204c8e;text-decoration:none;font-weight:700;padding:13px 18px;border-radius:6px}
+small{color:var(--muted);margin-top:28px;font-size:12px}
+</style>
+</head>
+<body>
+<main>
+  <h1 id="id">Disk Label</h1>
+  <p id="txt">Archivo de discos duros · Cine UDD</p>
+  <a class="b hidden" id="ir" href="#" style="display:none">Abrir ficha del disco</a>
+  <small>Las fichas se abren con la cuenta UDD.</small>
+</main>
+<script>
+/* Carpeta FICHAS en OneDrive. Si cambia de lugar, se corrige solo esta línea. */
+var FICHAS='https://uddcl-my.sharepoint.com/personal/fazuac_udd_cl/Documents/DISCOS%20DUROS%20CARRERA/Archivos%20discos/FICHAS';
+(function(){
+  var q=decodeURIComponent((location.search||'').slice(1)+(location.hash||'').slice(1)),m=q.match(/(\d+)/);
+  if(!m)return;
+  var id='HD-'+('00'+parseInt(m[1],10)).slice(-3),url=FICHAS+'/'+id+'_ficha.pdf';
+  document.getElementById('id').textContent=id;
+  document.getElementById('txt').textContent='Abriendo la ficha del disco…';
+  var a=document.getElementById('ir');a.href=url;a.style.display='inline-block';
+  document.title=id+' · Disk Label';
+  setTimeout(function(){location.replace(url)},400);
+})();
+</script>
+</body>
+</html>
