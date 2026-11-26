@@ -52,6 +52,21 @@ tr.r0 td.n{font-weight:600}
 .lista .i{font:700 17px 'Outfit'}.lista .t{min-width:0}.lista .t b{display:block;font:600 15px 'Outfit';text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lista .t span{display:block;font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.lista .c{font-size:12.5px;color:var(--ink2);white-space:nowrap}
 .h1{font:800 30px/1 'Outfit';text-transform:uppercase;margin:6px 0 0}
+.modo{display:inline-flex;margin-top:18px;background:var(--panel2);border-radius:20px;padding:3px}
+.modo button{all:unset;cursor:pointer;font:600 14px 'Outfit';padding:7px 16px;border-radius:17px;color:var(--muted)}
+.modo button.on{background:#fff;color:var(--bg)}
+.modo+.buscar{margin-top:12px}
+.estado{font-size:12.5px;color:var(--muted);margin:2px 0 10px;min-height:16px}
+.grp{border-top:1px solid var(--line);padding:14px 2px 10px}.grp:first-child{border-top:0}
+.grp .fn{font:600 15px/1.3 'Outfit';overflow-wrap:anywhere}.grp .fn mark{background:rgba(255,255,255,.22);color:#fff;border-radius:3px;padding:0 1px}
+.grp .cu{font-size:12px;color:var(--muted);margin:2px 0 6px}.grp .cu b{color:var(--acc);font-weight:600}
+.grp a{display:grid;grid-template-columns:62px 1fr auto;gap:2px 10px;align-items:baseline;text-decoration:none;background:var(--panel);border-radius:8px;padding:9px 11px;margin-top:6px}
+.grp a .i{font:700 15px 'Outfit'}.grp a .dn{font:600 13px 'Outfit';text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.grp a .sz{font-size:12px;color:var(--ink2);white-space:nowrap}
+.grp a .ru{grid-column:2/4;font-size:12px;color:var(--muted);overflow-wrap:anywhere;line-height:1.35}
+.mas{font-size:13px;color:var(--muted);text-align:center;margin:14px 0 0}
+.aviso{background:var(--panel);border-radius:10px;padding:11px 13px;margin-top:22px;font-size:13.5px;line-height:1.45;color:var(--ink2)}.aviso b{color:#fff;overflow-wrap:anywhere}
+tr.aqui td{background:rgba(255,255,255,.14)}tr.aqui td:first-child{border-radius:5px 0 0 5px}tr.aqui td:last-child{border-radius:0 5px 5px 0}
 </style>
 </head>
 <body>
@@ -70,16 +85,17 @@ function mes(t){var d=new Date(t);return MES[d.getMonth()]+' '+d.getFullYear()}
 function idDe(q){var m=String(q||'').match(/(\d+)/);return m?'HD-'+('00'+parseInt(m[1],10)).slice(-3):''}
 function pdf(id){return FICHAS+'/'+id+'_ficha.pdf'}
 async function json(u){var r=await fetch(u,{cache:'no-store'});if(!r.ok)throw new Error(r.status);return r.json()}
-var ABIERTO={0:true};
+var ABIERTO={0:true},RUTA={};
 function arbol(o){
   var a=o.arbol||[],h='<tr class="r0 ab" data-i="0" data-l="0"><td class="n"><button class="tg">'+ICO_A+'<span>'+esc(o.root||o.nombre||o.id)+'</span></button></td><td class="q">'+(o.n?o.n.toLocaleString('es-CL')+' arch.':'')+'</td><td class="s">'+(o.tot?fmt(o.tot):'')+'</td></tr>';
   if(o.raiz>0)h+='<tr data-l="1"><td class="n" style="padding-left:18px"><span class="tg"><span>Archivos sueltos en la raíz</span></span></td><td class="q"></td><td class="s">'+fmt(o.raiz)+'</td></tr>';
-  a.forEach(function(x,k){var hj=k+1<a.length&&a[k+1][0]>x[0];
+  var pila=[];RUTA={0:''};
+  a.forEach(function(x,k){var hj=k+1<a.length&&a[k+1][0]>x[0];pila.length=x[0]-1;pila.push(x[1]);RUTA[k+1]=pila.join('/');
     h+='<tr data-i="'+(k+1)+'" data-l="'+x[0]+'"'+(hj?' class="p"':'')+'><td class="n" style="padding-left:'+(x[0]*14)+'px">'+(hj?'<button class="tg"><i class="car"></i>'+ICO_C:'<span class="tg"><i class="car v"></i>'+ICO_C)+'<span>'+esc(x[1])+'</span>'+(hj?'</button>':'</span>')+'</td><td class="q">'+(x[3]?x[3].toLocaleString('es-CL')+' arch.':'')+'</td><td class="s">'+fmt(x[2])+'</td></tr>'});
   return h;
 }
 function visibles(){var vis=[true];document.querySelectorAll('#arb tr').forEach(function(r){var l=+r.dataset.l,ok=l===0||vis[l-1]===true;r.classList.toggle('oc',!ok);var i=r.dataset.i,ab=i!=null&&!!ABIERTO[i];vis[l]=ok&&ab;vis.length=l+1;r.classList.toggle('ab',ab);var ic=r.querySelector('button.tg .ico');if(ic&&l>0)ic.outerHTML=ab?ICO_A:ICO_C})}
-function disco(o){
+function disco(o,c,an){
   document.title=o.id+' · '+(o.nombre||'Disk Label');
   var t=+o.total||0,d=o.disp===''||o.disp==null?NaN:+o.disp,pc=t>0&&!isNaN(d)?Math.max(0,Math.min(100,(t-d)/t*100)):-1;
   var mx=(o.tipos||[]).reduce(function(m,x){return Math.max(m,x[1])},0);
@@ -88,6 +104,7 @@ function disco(o){
     (o.contenido?'<p class="cont">'+esc(o.contenido)+'</p>':'')+
     '<div class="datos">'+(o.n?'<span><b>'+o.n.toLocaleString('es-CL')+'</b> archivos</span>':'')+(o.min?'<span>Fechas: <b>'+mes(o.min)+' – '+mes(o.max)+'</b></span>':'')+'</div>'+
     (o.estado?'<span class="est">'+esc(o.estado)+'</span>':'')+
+    (an?'<div class="aviso">Buscaste <b>'+esc(an)+'</b>. Está en <b>'+esc(o.root||o.id)+(c?' / '+esc(c.split('/').join(' / ')):' (raíz)')+'</b></div>':'')+
     ((o.arbol&&o.arbol.length)||o.raiz?'<h2>Carpetas <span><button id="abT">Abrir todo</button><button id="ceT">Cerrar todo</button></span></h2><div class="caja"><table id="arb">'+arbol(o)+'</table></div>':'')+
     ((o.tipos&&o.tipos.length)?'<h2>Material por tipo</h2><div class="caja"><table class="tip">'+o.tipos.slice(0,10).map(function(x){return '<tr><td class="e">.'+esc(x[0])+'</td><td class="g"><i style="width:'+(x[1]/mx*100).toFixed(1)+'%"></i></td><td class="s">'+fmt(x[1])+'</td></tr>'}).join('')+'</table></div>':'')+
     '<a class="btn" href="'+pdf(o.id)+'">Abrir ficha completa (PDF)</a><p class="nota">La ficha PDF se abre con cuenta UDD.</p>'+
@@ -95,22 +112,72 @@ function disco(o){
   $('m').innerHTML=h;
   if($('arb')){visibles();$('arb').addEventListener('click',function(e){var b=e.target.closest('button.tg');if(!b)return;var i=b.closest('tr').dataset.i;ABIERTO[i]=!ABIERTO[i];visibles()});
     $('abT').onclick=function(){document.querySelectorAll('#arb tr[data-i]').forEach(function(r){ABIERTO[r.dataset.i]=true});visibles()};
-    $('ceT').onclick=function(){ABIERTO={0:true};visibles()}}
+    $('ceT').onclick=function(){ABIERTO={0:true};visibles()};
+    if(c){var best=-1;Object.keys(RUTA).forEach(function(i){var p=RUTA[i];if(p&&(c===p||c.indexOf(p+'/')===0)){ABIERTO[i]=true;if(best<0||p.length>RUTA[best].length)best=i}});
+      visibles();if(best>=0){var r=document.querySelector('#arb tr[data-i="'+best+'"]');if(r){r.classList.add('aqui');setTimeout(function(){r.scrollIntoView({block:'center',behavior:'smooth'})},250)}}}}
 }
-function lista(L){
-  var h='<p class="h1">Inventario de discos</p><input class="buscar" id="q" type="search" placeholder="Buscar por número, nombre o contenido"><div class="lista" id="l"></div>';
-  $('m').innerHTML=h;
-  function pinta(){var q=$('q').value.trim().toLowerCase();$('l').innerHTML=L.filter(function(o){return !q||(o.id+' '+o.nombre+' '+(o.contenido||'')).toLowerCase().indexOf(q)>=0}).map(function(o){
+function norm(t){return String(t||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')}
+function sinSep(t){return t.replace(/[\s_\-.]+/g,'')}
+var ARCH=null,CARGA=null;
+async function cargarArchivos(L,av){ /* v2.19: listas de archivos publicadas por la app */
+  if(ARCH)return ARCH;if(CARGA)return CARGA;
+  CARGA=(async function(){
+    var con=L.filter(function(o){return o.fa}),hechos=0,out=[],tot=0;
+    if(!con.length)return ARCH={discos:0,n:0,f:[]};
+    var cola=con.slice();
+    async function obrero(){while(cola.length){var o=cola.shift();
+      try{var d=await json('d/'+o.id+'_archivos.json');(d.f||[]).forEach(function(x){var nn=norm(x[1]);var e={o:o,c:d.c[x[0]]||'',n:x[1],b:x[2],t:x[3],q:x[4]||0,nn:nn,ns:sinSep(nn)},m=e.q&&/^(.*)\[(\d+)-(\d+)\](\.[^.]+)$/.exec(nn);if(m){e.sp=m[1];e.lo=+m[2];e.hi=+m[3];e.se=m[4]}out.push(e)})}catch(e){}
+      hechos++;av(hechos,con.length)}}
+    var ps=[];for(var k=0;k<Math.min(6,con.length);k++)ps.push(obrero());await Promise.all(ps);
+    return ARCH={discos:con.length,n:out.length,f:out};
+  })();
+  return CARGA;
+}
+function marca(n,toks){var l=norm(n),i=-1,t='';toks.forEach(function(x){var k=l.indexOf(x);if(k>=0&&(i<0||x.length>t.length)){i=k;t=x}});
+  return i<0?esc(n):esc(n.slice(0,i))+'<mark>'+esc(n.slice(i,i+t.length))+'</mark>'+esc(n.slice(i+t.length))}
+function lista(L,modo){
+  var h='<p class="h1">Inventario de discos</p><div class="modo"><button id="mD" type="button">Discos</button><button id="mA" type="button">Archivos</button></div>'+
+    '<input class="buscar" id="q" type="search" autocomplete="off"><p class="estado" id="es"></p><div id="l"></div>';
+  $('m').innerHTML=h;var tm=0;
+  function pintaDiscos(){var q=$('q').value.trim().toLowerCase();$('es').textContent='';$('l').className='lista';$('l').innerHTML=L.filter(function(o){return !q||(o.id+' '+o.nombre+' '+(o.contenido||'')).toLowerCase().indexOf(q)>=0}).map(function(o){
     return '<a href="./?'+o.id.replace(/\D/g,'')+'"><span class="i">'+esc(o.id)+'</span><span class="t"><b>'+esc(o.nombre||'(sin nombre)')+'</b><span>'+esc(o.contenido||'')+'</span></span><span class="c">'+(o.total?gb(o.total):'')+'</span></a>'}).join('')||'<p class="msg">Sin resultados.</p>'}
-  $('q').addEventListener('input',pinta);pinta();
+  async function pintaArchivos(){
+    $('l').className='';
+    var A=await cargarArchivos(L,function(a,b){if(modo==='a')$('es').textContent='Cargando las listas de archivos: '+a+' de '+b+' discos…'});
+    if(modo!=='a')return;
+    if(!A.discos){$('es').textContent='';$('l').innerHTML='<p class="msg">Todavía no hay listas de archivos publicadas. Se suben desde Disk Label (v2.19 o posterior) al guardar cada disco o con «Publicar todos los discos del Índice».</p>';return}
+    var q=norm($('q').value.trim()),toks=q.split(/\s+/).filter(Boolean);
+    var base='Busca entre '+A.n.toLocaleString('es-CL')+' archivos de '+A.discos+(A.discos===1?' disco':' discos')+(A.discos<L.length?' (de '+L.length+' en el inventario)':'')+'.';
+    if(q.length<2){$('es').textContent=base;$('l').innerHTML='<p class="msg">Escribe parte del nombre de un archivo: <i>ESC_12</i>, <i>A001C003</i>, <i>master</i>, <i>.wav</i>… Un mismo archivo puede aparecer en varios discos.</p>';return}
+    var tk2=toks.map(sinSep),tk3=toks.map(function(t){return /^(.*?)(\d{3,})(\.[a-z0-9]{2,5})?$/.exec(t)}),G={},orden=[],nres=0;
+    function cuadro(x,m){return x.sp!=null&&m&&x.sp.slice(-m[1].length)===m[1]&&+m[2]>=x.lo&&+m[2]<=x.hi&&(!m[3]||m[3]===x.se)}
+    A.f.forEach(function(x){for(var k=0;k<toks.length;k++){if(x.nn.indexOf(toks[k])<0&&(!tk2[k]||x.ns.indexOf(tk2[k])<0)&&!cuadro(x,tk3[k]))return}
+      nres++;var g=G[x.nn];if(!g){g=G[x.nn]={n:x.n,r:[]};orden.push(g)}g.r.push(x)});
+    orden.sort(function(a,b){var ea=norm(a.n)===q?0:1,eb=norm(b.n)===q?0:1;return ea-eb||a.n.localeCompare(b.n,'es',{numeric:true})});
+    var MAX=150,hh='';
+    orden.slice(0,MAX).forEach(function(g){
+      g.r.sort(function(a,b){return a.o.id<b.o.id?-1:a.o.id>b.o.id?1:0});
+      var ds={};g.r.forEach(function(x){ds[x.o.id]=1});var nd=Object.keys(ds).length;
+      hh+='<div class="grp"><div class="fn">'+marca(g.n,toks)+'</div><div class="cu">'+(nd>1?'<b>En '+nd+' discos</b>':'En 1 disco')+(g.r.length>nd?' · '+g.r.length+' copias':'')+(g.r[0].q?' · secuencia de '+g.r[0].q.toLocaleString('es-CL')+' archivos':'')+'</div>'+
+        g.r.map(function(x){return '<a href="./?'+x.o.id.replace(/\D/g,'')+'&c='+encodeURIComponent(x.c)+'&a='+encodeURIComponent(x.n)+'"><span class="i">'+esc(x.o.id)+'</span><span class="dn">'+esc(x.o.nombre||'')+'</span><span class="sz">'+fmt(x.b)+'</span><span class="ru">/'+esc(x.c)+(x.t?' · '+mes(x.t*864e5):'')+'</span></a>'}).join('')+'</div>'});
+    $('es').textContent=nres?(nres.toLocaleString('es-CL')+(nres===1?' coincidencia':' coincidencias')+' en '+orden.length.toLocaleString('es-CL')+(orden.length===1?' nombre':' nombres')+'.'):base;
+    $('l').innerHTML=(hh||'<p class="msg">Ningún archivo se llama así.</p>')+(orden.length>MAX?'<p class="mas">Se muestran '+MAX+' de '+orden.length.toLocaleString('es-CL')+' nombres. Escribe más para afinar.</p>':'');
+  }
+  function pinta(){if(modo==='a'){clearTimeout(tm);tm=setTimeout(pintaArchivos,180)}else pintaDiscos()}
+  function setModo(m,foco){modo=m;$('mD').classList.toggle('on',m!=='a');$('mA').classList.toggle('on',m==='a');
+    $('q').placeholder=m==='a'?'Buscar un archivo por su nombre':'Buscar por número, nombre o contenido';
+    try{history.replaceState(null,'',m==='a'?'./?archivos':'./')}catch(e){}pinta();if(foco)$('q').focus()}
+  $('mD').onclick=function(){if(modo==='a')setModo('d',1)};$('mA').onclick=function(){if(modo!=='a')setModo('a',1)};
+  $('q').addEventListener('input',pinta);setModo(modo||'d');
 }
 (async function(){
   var q=decodeURIComponent((location.search||'').slice(1)+(location.hash||'').slice(1)),id=idDe(q);
   if(id){
-    try{disco(await json('d/'+id+'.json'))}
+    var sp=new URLSearchParams(location.search);
+    try{disco(await json('d/'+id+'.json'),sp.get('c'),sp.get('a'))}
     catch(e){$('m').innerHTML='<p class="id">'+id+'</p><p class="msg">Este disco todavía no tiene su página publicada. Abriendo la ficha…</p><a class="btn" href="'+pdf(id)+'">Abrir ficha completa (PDF)</a><p class="nota">La ficha PDF se abre con cuenta UDD.</p>';setTimeout(function(){location.replace(pdf(id))},1500)}
   }else{
-    try{var L=await json('d/indice.json');lista((L.discos||L).sort(function(a,b){return a.id<b.id?-1:1}))}
+    try{var L=await json('d/indice.json');lista((L.discos||L).sort(function(a,b){return a.id<b.id?-1:1}),/archivo/i.test(q)?'a':'d')}
     catch(e){$('m').innerHTML='<p class="h1">Disk Label</p><p class="msg">Archivo de discos duros de Cine UDD.</p>'}
   }
 })();
