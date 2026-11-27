@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Disk Label · Cine UDD</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400..800&family=Libre+Franklin:wght@300..700&family=Space+Grotesk:wght@600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400..800&family=Libre+Franklin:wght@300..700&family=Space+Grotesk:wght@600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#204c8e;--panel:#183d75;--panel2:#13325f;--line:#2c5a9c;--line2:#3a69ad;--fg:#fff;--muted:#b3c7e6;--dim:#86a2cc;--ink2:#e6eefa;--track:#2d5a99;--acc:#e0583f}
 *{box-sizing:border-box}
@@ -70,6 +70,33 @@ tr.fa td.n{color:var(--muted)}tr.fa .ico{opacity:.75}
 .mas{font-size:13px;color:var(--muted);text-align:center;margin:14px 0 0}
 .aviso{background:var(--panel);border-radius:10px;padding:11px 13px;margin-top:22px;font-size:13.5px;line-height:1.45;color:var(--ink2)}.aviso b{color:#fff;overflow-wrap:anywhere}
 tr.aqui td{background:rgba(255,255,255,.14)}tr.aqui td:first-child{border-radius:5px 0 0 5px}tr.aqui td:last-child{border-radius:0 5px 5px 0}
+/* ficha móvil como la plataforma */
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+.dde{margin:20px 0 0;font:600 24px/1.1 'Outfit',sans-serif}
+.dde+.bar{margin-top:12px;height:8px;border-radius:4px}
+.uso{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 14px;margin-top:9px;font:400 13px 'IBM Plex Mono',monospace;color:var(--muted)}
+.uso b{color:#fff;font-weight:600}.uso i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px;border:1.5px solid var(--dim)}.uso i.u{background:#fff;border-color:#fff}
+.ds{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px;margin-top:20px}
+.ds small{display:block;font:400 11px 'IBM Plex Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.ds b{display:block;margin-top:3px;font:600 17px 'Outfit',sans-serif}
+.globos{display:flex;flex-wrap:wrap;gap:7px;margin-top:20px}
+.globos .est{margin:0;font-size:12.5px;padding:5px 11px}.globos .est em{font-style:normal;color:var(--muted)}.globos .est.vac em+span{color:var(--dim)}
+.globos .est.ac{border-color:#F2C230}
+td.n{white-space:normal}
+.tg>span{white-space:normal;overflow:visible;overflow-wrap:anywhere;line-height:1.3}
+.tg{align-items:flex-start}.tg .ico,.tg .car{margin-top:1px}
+#arb td{vertical-align:top}#arb td.s,#arb td.q{padding-top:10px}
+@media (max-width:520px){td.q{display:none}}
+/* inventario móvil con barra y actualización */
+.lista a.dk{display:block;padding:15px 2px 16px}
+.dk .f1{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:baseline}
+.dk .i{font:500 15px 'IBM Plex Mono',monospace}
+.dk .t{min-width:0}.dk .t b{display:block;font:600 15px 'Outfit';text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dk .t span{display:block;font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.dk .fe{text-align:right;font:500 13px 'IBM Plex Mono',monospace;white-space:nowrap}.dk .fe small{display:block;font-size:11.5px;color:var(--muted);font-weight:400;margin-top:2px}
+.dk .es{margin-top:11px;font:400 12px 'IBM Plex Mono',monospace;color:var(--muted)}
+.dk .es .l1{display:flex;justify-content:space-between}.dk .es b{color:#fff;font-weight:500;font-size:13px}
+.dk .es .bar{height:5px;margin:5px 0 4px}
 </style>
 </head>
 <body>
@@ -84,6 +111,11 @@ function $(i){return document.getElementById(i)}
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 function fmt(b){var o=function(x,d){return x.toLocaleString('es-CL',{minimumFractionDigits:d,maximumFractionDigits:d})};if(b>=1e12)return o(b/1e12,2)+' TB';if(b>=1e9)return o(b/1e9,1)+' GB';if(b>=1e6)return o(b/1e6,0)+' MB';return o(b/1e3,0)+' KB'}
 function gb(g){g=+g;return g>=1000?(g/1000).toLocaleString('es-CL',{maximumFractionDigits:2})+' TB':Math.round(g).toLocaleString('es-CL')+' GB'}
+function gbG(g){return Math.round(+g).toLocaleString('es-CL')+' GB'}
+function ua(o){if(o.act)return o.act;var m='';['leido','guardado','editado'].forEach(function(k){if(o[k]&&String(o[k])>m)m=String(o[k])});return m}
+function fechaC(iso){var d=new Date(iso);return ('0'+d.getDate()).slice(-2)+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+d.getFullYear()}
+function hace(iso){var a=new Date();a.setHours(0,0,0,0);var b=new Date(iso);b.setHours(0,0,0,0);var n=Math.round((a-b)/864e5);
+  if(n<=0)return 'hoy';if(n===1)return 'ayer';if(n<60)return 'hace '+n+' días';if(n<730)return 'hace '+Math.round(n/30.4)+' meses';return 'hace '+Math.floor(n/365)+' años'}
 function mes(t){var d=new Date(t);return MES[d.getMonth()]+' '+d.getFullYear()}
 function idDe(q){var m=String(q||'').match(/(\d+)/);return m?'HD-'+('00'+parseInt(m[1],10)).slice(-3):''}
 function pdf(id){return FICHAS+'/'+id+'_ficha.pdf'}
@@ -92,7 +124,7 @@ var ABIERTO={0:true},RUTA={},ESC=new URLSearchParams(location.search).get('k')==
 /* v2.33: al abrir una carpeta se ven sus archivos (de d/HD-XXX_archivos.json) */
 var FMP=null,ICO_F='<svg class="ico" viewBox="0 0 16 16"><path d="M3.5 1.5h6l3 3v10h-9z"/><path d="M9.5 1.5v3h3"/></svg>',ICO_S='<svg class="ico" viewBox="0 0 16 16"><path d="M5.5 1.5h6l2 2v8h-8z"/><path d="M3.5 3.5v10h8"/><path d="M1.5 5.5v10h8"/></svg>';
 function filaA(x,p,l){var nm=String(x[1]).replace(/\[(\d+)-(\d+)\]/,'$1…$2');
-  return '<tr class="fa" data-l="'+l+'" data-c="'+esc(p)+'" data-a="'+esc(x[1])+'"><td class="n" style="padding-left:'+(l*14)+'px"><span class="tg"><i class="car v"></i>'+(x[4]?ICO_S:ICO_F)+'<span>'+esc(nm)+'</span></span></td><td class="q">'+(x[4]?x[4].toLocaleString('es-CL')+' arch.':'')+'</td><td class="s">'+fmt(x[2])+'</td></tr>'}
+  return '<tr class="fa" data-l="'+l+'" data-c="'+esc(p)+'" data-a="'+esc(x[1])+'"><td class="n" style="padding-left:'+(l*14)+'px"><span class="tg"><i class="car v"></i>'+(x[4]?ICO_S:ICO_F)+'<span>'+esc(nm).replace(/([_.\-])/g,'$1<wbr>')+'</span></span></td><td class="q">'+(x[4]?x[4].toLocaleString('es-CL')+' arch.':'')+'</td><td class="s">'+fmt(x[2])+'</td></tr>'}
 function filasA(p,l){var L=FMP&&FMP[p];if(!L)return '';var s='';L.slice(0,300).forEach(function(x){s+=filaA(x,p,l)});
   if(L.length>300)s+='<tr class="fa" data-l="'+l+'"><td class="n" style="padding-left:'+(l*14)+'px">… y '+(L.length-300).toLocaleString('es-CL')+' archivos más</td><td></td><td></td></tr>';return s}
 function arbol(o){
@@ -115,10 +147,12 @@ function disco(o,c,an){
   var t=+o.total||0,d=o.disp===''||o.disp==null?NaN:+o.disp,pc=t>0&&!isNaN(d)?Math.max(0,Math.min(100,(t-d)/t*100)):-1;
   var mx=(o.tipos||[]).reduce(function(m,x){return Math.max(m,x[1])},0);
   var h='<p class="id">'+esc(o.id)+'</p><p class="nom">'+esc(o.nombre||'')+'</p>'+
-    (t?'<div class="cap">'+gb(t)+(isNaN(d)?'':'<span>'+gb(d)+' libres</span>')+'</div>'+(pc>=0?'<div class="bar"><i'+(pc>75?' class="lleno"':'')+' style="width:'+pc.toFixed(1)+'%"></i></div>':''):'')+
+    (t?'<p class="dde">Disco de '+gb(t)+'</p>'+(pc>=0?'<div class="bar"><i'+(pc>75?' class="lleno"':'')+' style="width:'+pc.toFixed(1)+'%"></i></div><div class="uso"><span><i class="u"></i><b>'+gbG(t-d)+'</b> usados · '+pc.toLocaleString('es-CL',{maximumFractionDigits:1})+' %</span><span><i></i><b>'+gbG(d)+'</b> libres</span></div>':''):'')+
     (o.contenido?'<p class="cont">'+esc(o.contenido)+'</p>':'')+
-    '<div class="datos">'+(o.n?'<span><b>'+o.n.toLocaleString('es-CL')+'</b> archivos</span>':'')+(o.min?'<span>Fechas: <b>'+mes(o.min)+' – '+mes(o.max)+'</b></span>':'')+'</div>'+
-    (o.estado?'<span class="est">'+esc(o.estado)+'</span>':'')+
+    '<div class="ds">'+(o.n?'<div><small>Archivos</small><b>'+o.n.toLocaleString('es-CL')+'</b></div>':'')+(o.tot?'<div><small>Peso total</small><b>'+fmt(o.tot)+'</b></div>':'')+(o.min?'<div><small>Fechas</small><b>'+mes(o.min)+' – '+mes(o.max)+'</b></div>':'')+(o.fs?'<div><small>Formato</small><b>'+esc(o.fs)+'</b></div>':'')+'</div>'+
+    '<div class="globos">'+(o.estado?'<span class="est">'+esc(o.estado)+'</span>':'')+(o.prioridad?'<span class="est"><em>Prioridad de rescate</em> '+esc(o.prioridad)+'</span>':'')+
+    '<span class="est'+(o.ubicacion?'':' vac')+'"><em>Ubicación física</em> <span>'+(o.ubicacion?esc(o.ubicacion):'—')+'</span></span>'+(o.catalogador?'<span class="est"><em>Catalogado por</em> '+esc(String(o.catalogador).replace(/ · .*$/,''))+'</span>':'')+
+    (ua(o)?'<span class="est"><em>Última actualización</em> '+fechaC(ua(o))+' · '+hace(ua(o))+'</span>':'')+'</div>'+
     (an?(ESC?'<div class="aviso">Carpeta <b>'+esc(an)+'</b>: <b>'+esc(o.root||o.id)+' / '+esc(c.split('/').join(' / '))+'</b></div>':'<div class="aviso">Buscaste <b>'+esc(an)+'</b>. Está en <b>'+esc(o.root||o.id)+(c?' / '+esc(c.split('/').join(' / ')):' (raíz)')+'</b></div>'):'')+
     ((o.arbol&&o.arbol.length)||o.raiz?'<h2>Carpetas <span><button id="abT">Abrir todo</button><button id="ceT">Cerrar todo</button></span></h2><div class="caja"><table id="arb">'+arbol(o)+'</table></div>':'')+
     ((o.tipos&&o.tipos.length)?'<h2>Material por tipo</h2><div class="caja"><table class="tip">'+o.tipos.slice(0,10).map(function(x){return '<tr><td class="e">.'+esc(x[0])+'</td><td class="g"><i style="width:'+(x[1]/mx*100).toFixed(1)+'%"></i></td><td class="s">'+fmt(x[1])+'</td></tr>'}).join('')+'</table></div>':'')+
@@ -166,7 +200,10 @@ function lista(L,modo){
     '<input class="buscar" id="q" type="search" autocomplete="off"><p class="estado" id="es"></p><div id="l"></div>';
   $('m').innerHTML=h;var tm=0;
   function pintaDiscos(){var q=$('q').value.trim().toLowerCase();$('es').textContent='';$('l').className='lista';$('l').innerHTML=L.filter(function(o){return !q||(o.id+' '+o.nombre+' '+(o.contenido||'')).toLowerCase().indexOf(q)>=0}).map(function(o){
-    return '<a href="./?'+o.id.replace(/\D/g,'')+'"><span class="i">'+esc(o.id)+'</span><span class="t"><b>'+esc(o.nombre||'(sin nombre)')+'</b><span>'+esc(o.contenido||'')+'</span></span><span class="c">'+(o.total?gb(o.total):'')+'</span></a>'}).join('')||'<p class="msg">Sin resultados.</p>'}
+    var t=+o.total||0,d=o.disp===''||o.disp==null?NaN:+o.disp,pc=t>0&&!isNaN(d)?Math.max(0,Math.min(100,(t-d)/t*100)):-1,u=o.act||'';
+    return '<a class="dk" href="./?'+o.id.replace(/\D/g,'')+'"><div class="f1"><span class="i">'+esc(o.id)+'</span><span class="t"><b>'+esc(o.nombre||'(sin nombre)')+'</b><span>'+esc(o.contenido||'')+'</span></span>'+
+      '<span class="fe">'+(u?fechaC(u)+'<small>'+hace(u)+'</small>':'')+'</span></div>'+
+      (pc>=0?'<div class="es"><div class="l1"><span><b>'+gbG(t-d)+'</b> usados</span><span>de '+gb(t)+'</span></div><div class="bar"><i'+(pc>75?' class="lleno"':'')+' style="width:'+pc.toFixed(1)+'%"></i></div>'+gbG(d)+' libres · '+Math.round(pc)+' % ocupado</div>':(t?'<div class="es">Disco de '+gb(t)+'</div>':''))+'</a>'}).join('')||'<p class="msg">Sin resultados.</p>'}
   async function pintaArchivos(){
     $('l').className='';
     var A=await cargarArchivos(L,function(a,b){if(modo==='a')$('es').textContent='Cargando las listas de archivos: '+a+' de '+b+' discos…'});
