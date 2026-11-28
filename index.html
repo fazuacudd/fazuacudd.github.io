@@ -98,6 +98,22 @@ td.n{white-space:normal}
 .dk .es .l1{display:flex;justify-content:space-between}.dk .es b{color:#fff;font-weight:500;font-size:13px}
 .dk .es .bar{height:5px;margin:5px 0 4px}
 .lista a.dk{background:var(--panel);border-radius:12px;padding:14px 14px 15px;margin-top:10px;border-top:0}.lista a.dk:first-child{margin-top:0}
+/* v3.0 beta: obras */
+.modo a.mO{font:600 14px 'Outfit';padding:7px 16px;border-radius:17px;color:var(--muted);text-decoration:none}
+.obF{margin-top:14px}.obF select{font:15px 'Libre Franklin';color:#fff;background:var(--panel2);border:1px solid var(--line2);border-radius:8px;padding:9px 12px}
+.oL{display:flex;flex-direction:column;gap:10px}
+.oc{display:block;background:var(--panel);border-radius:12px;overflow:hidden;text-decoration:none}
+.oc .ph{display:block;height:150px;background:var(--panel2) center/cover no-repeat}
+.oc .tx{display:block;padding:11px 14px 13px}.oc b{display:block;font:600 16px 'Outfit'}
+.oc .tx>span{display:block;font-size:12.5px;color:var(--muted);margin-top:2px}
+.oc .dd{font:500 12.5px 'IBM Plex Mono',monospace!important;color:#fff!important;margin-top:8px!important}.oc .dd.r{color:#F2C230!important}.oc .dd.n{color:var(--dim)!important}
+.oFoto{height:220px;margin:-22px -18px 18px;background:var(--panel2) center 35%/cover no-repeat}
+.oT{font:800 30px/1.05 'Outfit',sans-serif;margin:0}.oM{font-size:14px;color:var(--ink2);margin:8px 0 0}
+.oFe p{margin:4px 0;font-size:14px}.oFe span{display:block;font-size:12px;color:var(--muted)}
+.oCp{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;background:var(--panel);border-radius:12px;padding:12px 14px;margin-top:10px;text-decoration:none}
+.oCp .id{font:800 24px 'Outfit'}.oCp .id small{font:500 10px 'IBM Plex Mono',monospace;color:#F2C230;vertical-align:11px;margin-right:2px}
+.oCp .ru{font:400 11.5px/1.4 'IBM Plex Mono',monospace;color:var(--muted);overflow-wrap:anywhere}.oCp .ru b{display:block;color:#fff;font-weight:500}
+.oCp .tag{font:500 9.5px 'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--bg);background:#F2C230;border-radius:3px;padding:2px 6px}
 </style>
 </head>
 <body>
@@ -197,7 +213,7 @@ async function cargarArchivos(L,av){ /* v2.19: listas de archivos publicadas por
 function marca(n,toks){var l=norm(n),i=-1,t='';toks.forEach(function(x){var k=l.indexOf(x);if(k>=0&&(i<0||x.length>t.length)){i=k;t=x}});
   return i<0?esc(n):esc(n.slice(0,i))+'<mark>'+esc(n.slice(i,i+t.length))+'</mark>'+esc(n.slice(i+t.length))}
 function lista(L,modo){
-  var h='<p class="h1">Inventario de discos</p><div class="modo"><button id="mD" type="button">Discos</button><button id="mA" type="button">Archivos</button></div>'+
+  var h='<p class="h1">Inventario de discos</p><div class="modo"><button id="mD" type="button">Discos</button><button id="mA" type="button">Archivos</button><a class="mO" href="./?obras">Obras</a></div>'+
     '<input class="buscar" id="q" type="search" autocomplete="off"><p class="estado" id="es"></p><div id="l"></div>';
   $('m').innerHTML=h;var tm=0;
   function pintaDiscos(){var q=$('q').value.trim().toLowerCase();$('es').textContent='';$('l').className='lista';$('l').innerHTML=L.filter(function(o){return !q||(o.id+' '+o.nombre+' '+(o.contenido||'')).toLowerCase().indexOf(q)>=0}).map(function(o){
@@ -244,8 +260,47 @@ function lista(L,modo){
   $('mD').onclick=function(){if(modo==='a')setModo('d',1)};$('mA').onclick=function(){if(modo!=='a')setModo('a',1)};
   $('q').addEventListener('input',pinta);setModo(modo||'d');
 }
+
+/* ---------- v3.0 beta: obras ---------- */
+var OBR=null;
+function obN(t){return String(t||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ').trim()}
+async function obrasPub(id){
+  if(!OBR){var d=await json('o/obras.json'),e={e:{}};try{e=await json('o/enlaces.json')}catch(x){}OBR={L:d.obras||[],E:e.e||{}}}
+  if(id){var o=OBR.L.filter(function(x){return x.id===id})[0];if(!o)throw new Error('no');return obraFicha(o)}
+  obrasLista();
+}
+function obDiscos(o){var d={};(OBR.E[o.id]||[]).forEach(function(x){d[x.d]=1});return Object.keys(d)}
+function obrasLista(){
+  document.title='Obras · Disk Label';
+  var an={};OBR.L.forEach(function(o){if(o.anio)an[o.anio]=1});var anios=Object.keys(an).sort().reverse();
+  $('m').innerHTML='<p class="h1">Obras</p><div class="modo"><a class="mO" href="./">Discos</a><a class="mO" href="./?archivos">Archivos</a><button type="button" class="on">Obras</button></div>'+
+    '<div class="obF"><select id="oA"><option value="">Todos los años</option>'+anios.map(function(a){return '<option>'+esc(a)+'</option>'}).join('')+'</select></div>'+
+    '<input class="buscar" id="oQ" type="search" autocomplete="off" placeholder="Título, director, curso o profesor"><p class="estado" id="oE"></p><div id="oL" class="oL"></div><p class="pie"><a href="./">Ver todos los discos</a></p>';
+  function pinta(){var a=$('oA').value,q=obN($('oQ').value).split(' ').filter(Boolean);
+    var L=OBR.L.filter(function(o){if(a&&String(o.anio)!==a)return false;var t=obN([o.titulo,o.director,o.productor,o.curso,o.profesor,o.montaje,o.fotografia,o.sonido,o.arte].join(' '));return q.every(function(w){return t.indexOf(w)>=0})})
+      .sort(function(x,y){return String(y.anio||'').localeCompare(String(x.anio||''))||String(x.titulo).localeCompare(String(y.titulo),'es')});
+    $('oE').textContent=L.length+(L.length===1?' obra':' obras');
+    $('oL').innerHTML=L.slice(0,200).map(function(o){var ds=obDiscos(o);
+      return '<a class="oc" href="./?obra='+encodeURIComponent(o.id)+'">'+(o.f?'<span class="ph" style="background-image:url(\'o/f/'+encodeURIComponent(o.id)+'.jpg\')"></span>':'')+
+        '<span class="tx"><b>'+esc(o.titulo)+'</b><span>'+esc([o.anio,o.curso,o.director].filter(Boolean).join(' · '))+'</span>'+
+        '<span class="dd'+(ds.length===1?' r':ds.length?'':' n')+'">'+(ds.length?esc(ds.join(' · ')):'Sin ubicar')+'</span></span></a>'}).join('')||'<p class="msg">Sin resultados.</p>'}
+  $('oA').onchange=pinta;$('oQ').oninput=pinta;pinta();
+}
+var OB_CG=[['director','Dirección'],['productor','Producción'],['jefeProduccion','Jefatura de producción'],['fotografia','Dirección de fotografía'],['sonido','Sonido'],['arte','Dirección de arte'],['asistente','Asistencia de dirección'],['montaje','Montaje'],['otros','Otros cargos'],['profesor','Profesor']];
+function obraFicha(o){
+  document.title=o.titulo+' · Disk Label';var E=OBR.E[o.id]||[];
+  $('m').innerHTML=(o.f?'<div class="oFoto" style="background-image:url(\'o/f/'+encodeURIComponent(o.id)+'.jpg\')"></div>':'')+
+    '<p class="oT">'+esc(o.titulo)+'</p><p class="oM">'+esc([o.formato,o.curso,o.anio,o.duracion?o.duracion+' min':''].filter(Boolean).join(' · '))+'</p>'+
+    '<div class="ds">'+OB_CG.filter(function(c){return o[c[0]]}).map(function(c){return '<div><small>'+c[1]+'</small><b>'+esc(o[c[0]])+'</b></div>'}).join('')+'</div>'+
+    (o.sinopsis?'<p class="cont">'+esc(o.sinopsis)+'</p>':'')+
+    (o.estrenos&&o.estrenos.length?'<h2>Festivales</h2><div class="caja oFe">'+o.estrenos.map(function(x){return '<p>'+esc(x[1])+'<span>'+esc(x[2]||'')+' · '+esc(x[0]||'')+'</span></p>'}).join('')+'</div>':'')+
+    '<h2>Dónde está</h2>'+(E.length?E.map(function(x){return '<a class="oCp" href="./?'+String(x.d).replace(/\D/g,'')+'&c='+encodeURIComponent(x.c||'')+'&a='+encodeURIComponent(x.n)+'"><span class="id"><small>HD</small>'+esc(String(x.d).replace(/\D/g,''))+'</span><span class="ru">'+esc((x.c||'').split('/').join(' / '))+'<b>'+esc(x.n)+'</b></span>'+(x.m?'<span class="tag">Máster</span>':'')+'</a>'}).join(''):'<p class="msg">Esta obra todavía no está ubicada en ningún disco.</p>')+
+    '<p class="pie"><a href="./?obras">Ver todas las obras</a></p>';
+}
 (async function(){
   var q=decodeURIComponent((location.search||'').slice(1)+(location.hash||'').slice(1)),id=idDe(q);
+  var spO=new URLSearchParams(location.search);
+  if(spO.get('obra')||/^obras/i.test(q)){try{await obrasPub(spO.get('obra'))}catch(e){$('m').innerHTML='<p class="h1">Obras</p><p class="msg">Todavía no hay obras publicadas.</p><p class="pie"><a href="./">Ver todos los discos</a></p>'}return}
   if(id){
     var sp=new URLSearchParams(location.search);
     try{disco(await json('d/'+id+'.json'),sp.get('c'),sp.get('a'))}
