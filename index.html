@@ -98,9 +98,17 @@ td.n{white-space:normal}
 .dk .es .l1{display:flex;justify-content:space-between}.dk .es b{color:#fff;font-weight:500;font-size:13px}
 .dk .es .bar{height:5px;margin:5px 0 4px}
 .lista a.dk{background:var(--panel);border-radius:12px;padding:14px 14px 15px;margin-top:10px;border-top:0}.lista a.dk:first-child{margin-top:0}
-/* v3.0 beta: obras */
+/* v3.0 beta: obras (v3.1: filtros y orden) */
 .modo a.mO{font:600 14px 'Outfit';padding:7px 16px;border-radius:17px;color:var(--muted);text-decoration:none}
-.obF{margin-top:14px}.obF select{font:15px 'Libre Franklin';color:#fff;background:var(--panel2);border:1px solid var(--line2);border-radius:8px;padding:9px 12px}
+.obF{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.oS{display:flex;flex-direction:column;min-width:0;background:var(--panel2);border:1px solid var(--line2);border-radius:8px;padding:6px 10px 7px;position:relative}
+.oS.on{border-color:#F2C230}.oS small{font:500 9.5px 'IBM Plex Mono',monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.oS select{all:unset;font:600 14px 'Libre Franklin';color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:16px;margin-top:1px}
+.oS::after{content:'▾';position:absolute;right:10px;bottom:8px;font-size:11px;color:var(--muted);pointer-events:none}
+.oS select option{color:#111;background:#fff}
+.oX{font-size:13px;color:var(--ink2);margin-left:12px;text-decoration:underline}
+.obR{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:8px 0 10px}.obR .estado{margin:0}
+.oOr{background:none;border:0;padding:0 16px 0 0;align-items:flex-end}.oOr::after{right:0;bottom:2px}.oOr select{padding-right:0;font-size:13.5px}
 .oL{display:flex;flex-direction:column;gap:10px}
 .oc{display:block;background:var(--panel);border-radius:12px;overflow:hidden;text-decoration:none}
 .oc .ph{display:block;height:150px;background:var(--panel2) center/cover no-repeat}
@@ -270,21 +278,43 @@ async function obrasPub(id){
   obrasLista();
 }
 function obDiscos(o){var d={};(OBR.E[o.id]||[]).forEach(function(x){d[x.d]=1});return Object.keys(d)}
+var OBF={anio:'',curso:'',profesor:'',formato:'',q:''},OBO='anio';try{OBO=localStorage.getItem('obOrden')||'anio'}catch(x){}
+var OB_ORD=[['anio','Año, del más nuevo'],['viejo','Año, del más antiguo'],['titulo','Título'],['curso','Curso'],['profesor','Profesor'],['formato','Formato'],['dur','Duración'],['ubic','Sin ubicar primero']];
+function obOrd(k){
+  function t(x,y,c){x=String(x||'');y=String(y||'');if(!x!==!y)return x?-1:1;return x.localeCompare(y,'es',{numeric:true,sensitivity:'base'})*(c||1)}
+  function an(a,b){return t(a.anio,b.anio,-1)}function cu(a,b){return t(a.curso,b.curso)}
+  return function(a,b){var r=0;
+    if(k==='viejo')r=t(a.anio,b.anio)||cu(a,b);else if(k==='titulo')r=0;else if(k==='curso')r=cu(a,b)||an(a,b);
+    else if(k==='profesor')r=t(a.profesor,b.profesor)||an(a,b)||cu(a,b);else if(k==='formato')r=t(a.formato,b.formato)||an(a,b)||cu(a,b);
+    else if(k==='dur')r=(parseFloat(b.duracion)||0)-(parseFloat(a.duracion)||0);
+    else if(k==='ubic')r=(obDiscos(a).length?1:0)-(obDiscos(b).length?1:0)||an(a,b)||cu(a,b);else r=an(a,b)||cu(a,b);
+    return r||t(a.titulo,b.titulo)}}
+function obFil(sin){var q=obN(OBF.q).split(' ').filter(Boolean);
+  return OBR.L.filter(function(o){for(var k in OBF){if(k==='q'||k===sin||!OBF[k])continue;if(String(o[k]||'')!==OBF[k])return false}
+    if(!q.length)return true;var t=obN([o.titulo,o.director,o.productor,o.jefeProduccion,o.curso,o.profesor,o.montaje,o.fotografia,o.sonido,o.arte,o.asistente,o.otros].join(' '));return q.every(function(w){return t.indexOf(w)>=0})})}
 function obrasLista(){
   document.title='Obras · Disk Label';
-  var an={};OBR.L.forEach(function(o){if(o.anio)an[o.anio]=1});var anios=Object.keys(an).sort().reverse();
   $('m').innerHTML='<p class="h1">Obras</p><div class="modo"><a class="mO" href="./">Discos</a><a class="mO" href="./?archivos">Archivos</a><button type="button" class="on">Obras</button></div>'+
-    '<div class="obF"><select id="oA"><option value="">Todos los años</option>'+anios.map(function(a){return '<option>'+esc(a)+'</option>'}).join('')+'</select></div>'+
-    '<input class="buscar" id="oQ" type="search" autocomplete="off" placeholder="Título, director, curso o profesor"><p class="estado" id="oE"></p><div id="oL" class="oL"></div><p class="pie"><a href="./">Ver todos los discos</a></p>';
-  function pinta(){var a=$('oA').value,q=obN($('oQ').value).split(' ').filter(Boolean);
-    var L=OBR.L.filter(function(o){if(a&&String(o.anio)!==a)return false;var t=obN([o.titulo,o.director,o.productor,o.curso,o.profesor,o.montaje,o.fotografia,o.sonido,o.arte].join(' '));return q.every(function(w){return t.indexOf(w)>=0})})
-      .sort(function(x,y){return String(y.anio||'').localeCompare(String(x.anio||''))||String(x.titulo).localeCompare(String(y.titulo),'es')});
+    '<input class="buscar" id="oQ" type="search" autocomplete="off" placeholder="Título, director o persona del equipo">'+
+    '<div class="obF" id="oF"></div><div class="obR"><p class="estado"><span id="oE"></span><a href="#" id="oX" class="oX" hidden>Quitar filtros</a></p><label class="oS oOr"><small>Ordenar</small><select id="oO">'+OB_ORD.map(function(o){return '<option value="'+o[0]+'"'+(OBO===o[0]?' selected':'')+'>'+o[1]+'</option>'}).join('')+'</select></label></div>'+
+    '<div id="oL" class="oL"></div><p class="pie"><a href="./">Ver todos los discos</a></p>';
+  var CAMPOS=[['anio','Año'],['curso','Curso'],['profesor','Profesor'],['formato','Formato']];
+  function filtros(){
+    $('oF').innerHTML=CAMPOS.map(function(c){var k=c[0],s={};if(OBF[k])s[OBF[k]]=1;obFil(k).forEach(function(o){if(o[k])s[o[k]]=1});
+      var v=Object.keys(s).sort(function(a,b){return k==='anio'?b.localeCompare(a):a.localeCompare(b,'es')});
+      return '<label class="oS'+(OBF[k]?' on':'')+'"><small>'+c[1]+'</small><select data-k="'+k+'"><option value="">Todos</option>'+v.map(function(x){return '<option'+(OBF[k]===x?' selected':'')+'>'+esc(x)+'</option>'}).join('')+'</select></label>'}).join('');$('oX').hidden=!(OBF.anio||OBF.curso||OBF.profesor||OBF.formato);
+    $('oF').querySelectorAll('select').forEach(function(s){s.onchange=function(){OBF[s.dataset.k]=s.value;pinta()}});
+  }
+  function pinta(){filtros();var L=obFil().sort(obOrd(OBO));
     $('oE').textContent=L.length+(L.length===1?' obra':' obras');
     $('oL').innerHTML=L.slice(0,200).map(function(o){var ds=obDiscos(o);
       return '<a class="oc" href="./?obra='+encodeURIComponent(o.id)+'">'+(o.f?'<span class="ph" style="background-image:url(\'o/f/'+encodeURIComponent(o.id)+'.jpg\')"></span>':'')+
-        '<span class="tx"><b>'+esc(o.titulo)+'</b><span>'+esc([o.anio,o.curso,o.director].filter(Boolean).join(' · '))+'</span>'+
-        '<span class="dd'+(ds.length===1?' r':ds.length?'':' n')+'">'+(ds.length?esc(ds.join(' · ')):'Sin ubicar')+'</span></span></a>'}).join('')||'<p class="msg">Sin resultados.</p>'}
-  $('oA').onchange=pinta;$('oQ').oninput=pinta;pinta();
+        '<span class="tx"><b>'+esc(o.titulo)+'</b><span>'+esc([o.anio,o.curso,o.profesor].filter(Boolean).join(' · '))+'</span>'+
+        '<span class="dd'+(ds.length===1?' r':ds.length?'':' n')+'">'+(ds.length?esc(ds.join(' · ')):'Sin ubicar')+'</span></span></a>'}).join('')||'<p class="msg">Ninguna obra con esos filtros.</p>'}
+  var tm=0;$('oQ').oninput=function(){clearTimeout(tm);tm=setTimeout(function(){OBF.q=$('oQ').value;pinta()},200)};
+  $('oX').onclick=function(e){e.preventDefault();OBF.anio=OBF.curso=OBF.profesor=OBF.formato='';pinta()};
+  $('oO').onchange=function(){OBO=this.value;try{localStorage.setItem('obOrden',OBO)}catch(x){}pinta()};
+  pinta();
 }
 var OB_CG=[['director','Dirección'],['productor','Producción'],['jefeProduccion','Jefatura de producción'],['fotografia','Dirección de fotografía'],['sonido','Sonido'],['arte','Dirección de arte'],['asistente','Asistencia de dirección'],['montaje','Montaje'],['otros','Otros cargos'],['profesor','Profesor']];
 function obraFicha(o){
